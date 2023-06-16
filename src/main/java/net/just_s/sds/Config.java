@@ -1,11 +1,19 @@
 package net.just_s.sds;
 
-import net.minecraft.block.Block;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.registry.Registries;
-import org.jetbrains.annotations.Nullable;
-
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.block.Block;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.tag.TagKey;
+import net.minecraft.state.property.Property;
+import org.jetbrains.annotations.Nullable;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -14,13 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
-
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-
-import com.google.gson.*;
 
 public class Config {
     private static final File configFile = FabricLoader.getInstance().getConfigDir().resolve("SDS.json").toFile();
@@ -196,7 +197,9 @@ public class Config {
             writer.write(prettyJsonString);
             writer.close();
             SDSMod.LOGGER.error("Saved new config file.");
-        } catch (IOException e) {SDSMod.LOGGER.error("Error while saving:" + e.getMessage());}
+        } catch (IOException e) {
+            SDSMod.LOGGER.error("Error while saving:" + e.getMessage());
+        }
     }
 
     private static void populate(HashMap<String, List<String>> map, JSONArray source) {
@@ -240,7 +243,13 @@ public class Config {
                 return !tags_forbidden.get(tagName).isEmpty();
             }
         }
-        // 3) if block and its tags were not clarified in config, check whitelist mode
+        //3 if block has properties in allowed config
+        for (Property<?> property : block.getStateManager().getProperties()) {
+            if (properties.getOrDefault(property.getName(), false))
+                return true;
+        }
+
+        // 4) if block and its tags were not clarified in config, check whitelist mode
         return !whitelist;
     }
 
